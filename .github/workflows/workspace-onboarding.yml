@@ -59,6 +59,7 @@ jobs:
         env:
           TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
           WORKSPACE_NAME: 'admin-ws-parent-admin'
+          PROJECT_ID: 'Novartis-WS-Onboarding'
     outputs: 
       admin_fileset: ${{ steps.admin-ws.outputs.admin_fileset }}
 
