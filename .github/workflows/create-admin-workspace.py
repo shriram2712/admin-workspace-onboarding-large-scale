@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import logging
+import traceback
 
 # Define the Terraform Cloud API endpoint and organization name
 API_ENDPOINT = "https://app.terraform.io/api/v2/organizations/{ORG_NAME}/workspaces"
@@ -57,6 +58,7 @@ if not workspace_exists:
         with open(os.getenv('GITHUB_ENV'), 'a') as f:
             f.write(f"TFC_WORKSPACE_ID={workspace_id}\n")
     except requests.exceptions.RequestException as e:
+        print(traceback.format_exc())
         raise SystemExit(f"Error: {e}") # print error message and exit the script
 else:
     print("Workspace already exists.")
