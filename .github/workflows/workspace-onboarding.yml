@@ -31,36 +31,36 @@ jobs:
         workspaces: ${{ steps.admin-workspace.outputs.workspaces }}
         admin_workspaces: ${{ steps.admin-workspace.outputs.admin_workspaces }}
 
-  # tfe-ws-parent:
-  #   needs: [parse-ws-config]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: checkout-repo
-  #       uses: actions/checkout@v3
-  #     - name: echo
-  #       id: admin-ws
-  #       run: | 
-  #           echo ${{needs.parse-ws-config.outputs.admin_workspaces}}
-  #           jq -r '.[]' <<< '${{needs.parse-ws-config.outputs.admin_workspaces}}' | paste -sd "," -
-  #           export ADMIN_FILESET="$(jq -r '.[]' <<< '${{needs.parse-ws-config.outputs.admin_workspaces}}' | paste -sd "," -)"
-  #           echo "admin_fileset=config/{$ADMIN_FILESET}/*.yaml" >> $GITHUB_OUTPUT
-  #     - name: log fileset
-  #       run: |
-  #         echo "admin_fileset:"${{ steps.admin-ws.outputs.admin_fileset }}
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v4.6.0
-  #       with:
-  #         python-version: '3.10'
-  #         cache: 'pip'
-  #     - name: install-python-dep
-  #       run: pip install -r ./.github/workflows/requirements.txt
-  #     - name: check-create-workspace
-  #       run: python ./.github/workflows/create-admin-workspace.py
-  #       env:
-  #         TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
-  #         WORKSPACE_NAME: 'admin-ws-parent-admin'
-  #   outputs: 
-  #     admin_fileset: ${{ steps.admin-ws.outputs.admin_fileset }}
+  tfe-ws-parent:
+    needs: [parse-ws-config]
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-repo
+        uses: actions/checkout@v3
+      - name: echo
+        id: admin-ws
+        run: | 
+            echo ${{needs.parse-ws-config.outputs.admin_workspaces}}
+            jq -r '.[]' <<< '${{needs.parse-ws-config.outputs.admin_workspaces}}' | paste -sd "," -
+            export ADMIN_FILESET="$(jq -r '.[]' <<< '${{needs.parse-ws-config.outputs.admin_workspaces}}' | paste -sd "," -)"
+            echo "admin_fileset=config/{$ADMIN_FILESET}/*.yaml" >> $GITHUB_OUTPUT
+      - name: log fileset
+        run: |
+          echo "admin_fileset:"${{ steps.admin-ws.outputs.admin_fileset }}
+      - name: Setup Python
+        uses: actions/setup-python@v4.6.0
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: install-python-dep
+        run: pip install -r ./.github/workflows/requirements.txt
+      - name: check-create-workspace
+        run: python ./.github/workflows/create-admin-workspace.py
+        env:
+          TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
+          WORKSPACE_NAME: 'admin-ws-parent-admin'
+    outputs: 
+      admin_fileset: ${{ steps.admin-ws.outputs.admin_fileset }}
 
   # tfe-parent-cfg:
   #   needs: [tfe-ws-parent]
