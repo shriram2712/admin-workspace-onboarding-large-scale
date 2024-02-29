@@ -9,6 +9,7 @@ env:
   # No need to pass as inputs to each action
   TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
   TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+  TFE_TOKEN: ${{ secrets.TF_API_TOKEN }}
   TF_DIRECTORY: ""
   PROJECT_ID: ${{ vars.PROJECT_ID }}
   
@@ -318,4 +319,3 @@ jobs:
   #         echo 'Latest Run Status: ${{ steps.show-run.outputs.run_status }}'
   #         echo 'payload: ${{ steps.show-run.outputs.payload }}'
   #         echo 'run_link: ${{ steps.show-run.outputs.run_link }}'
-  
