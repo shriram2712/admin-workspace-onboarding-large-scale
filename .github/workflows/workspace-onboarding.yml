@@ -86,70 +86,70 @@ jobs:
     outputs: 
       configversion: ${{ steps.parent-tfe-config.outputs.configuration_version_id }}
 
-  # tfe-ws-parent-run:
-  #   needs: [tfe-parent-cfg]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: checkout-repo
-  #       uses: actions/checkout@v3
+  tfe-ws-parent-run:
+    needs: [tfe-parent-cfg]
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-repo
+        uses: actions/checkout@v3
 
-  #     - name: Run Terraform Plan
-  #       uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
-  #       continue-on-error: true
-  #       id: run-plan
-  #       with:
-  #         workspace: 'admin-ws-parent-admin'
-  #         configuration_version: ${{ needs.tfe-parent-cfg.outputs.configversion }}
+      - name: Run Terraform Plan
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
+        continue-on-error: true
+        id: run-plan
+        with:
+          workspace: 'admin-ws-parent-admin'
+          configuration_version: ${{ needs.tfe-parent-cfg.outputs.configversion }}
 
-  #     - name: Log Error
-  #       if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
-  #       run: |
-  #         echo 'An error occurred in the previous step.'
-  #         echo 'The error message was: ${{ steps.run-plan.outcome }}'
-  #         echo 'run_status: ${{ steps.run-plan.outputs.run_status }}'
-  #         echo 'plan_status: ${{ steps.run-plan.outputs.plan_status }}'
-  #         echo 'payload: ${{ steps.run-plan.outputs.payload }}'
+      - name: Log Error
+        if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
+        run: |
+          echo 'An error occurred in the previous step.'
+          echo 'The error message was: ${{ steps.run-plan.outcome }}'
+          echo 'run_status: ${{ steps.run-plan.outputs.run_status }}'
+          echo 'plan_status: ${{ steps.run-plan.outputs.plan_status }}'
+          echo 'payload: ${{ steps.run-plan.outputs.payload }}'
           
-  #     - name: Discard Terraform Run
-  #       if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
-  #       uses: hashicorp/tfc-workflows-github/actions/discard-run@v1.0.0
-  #       id: discard-run
-  #       with:
-  #         run: ${{ steps.run-plan.outputs.run_id }}
-  #         comment: "Run discarded due to error ${{ steps.run-plan.outputs.plan_status }}"
+      - name: Discard Terraform Run
+        if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
+        uses: hashicorp/tfc-workflows-github/actions/discard-run@v1.0.0
+        id: discard-run
+        with:
+          run: ${{ steps.run-plan.outputs.run_id }}
+          comment: "Run discarded due to error ${{ steps.run-plan.outputs.plan_status }}"
       
-  #     - name: Catch Error   
-  #       if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
-  #       run: | 
-  #         exit 1
+      - name: Catch Error   
+        if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
+        run: | 
+          exit 1
       
-  #     - uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.0.0
-  #       name: Get plan output
-  #       id: plan-output
-  #       with:
-  #         plan: ${{ steps.run-plan.outputs.plan_id }}
+      - uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.0.0
+        name: Get plan output
+        id: plan-output
+        with:
+          plan: ${{ steps.run-plan.outputs.plan_id }}
       
-  #     - name: Reference plan output
-  #       run: |
-  #         echo 'Plan status: ${{ steps.plan-output.outputs.plan_status }}'
-  #         echo 'Resources to Add: ${{ steps.plan-output.outputs.add }}'
-  #         echo 'Resources to Change: ${{ steps.plan-output.outputs.change }}'
-  #         echo 'Resources to Destroy: ${{ steps.plan-output.outputs.destroy }}'
+      - name: Reference plan output
+        run: |
+          echo 'Plan status: ${{ steps.plan-output.outputs.plan_status }}'
+          echo 'Resources to Add: ${{ steps.plan-output.outputs.add }}'
+          echo 'Resources to Change: ${{ steps.plan-output.outputs.change }}'
+          echo 'Resources to Destroy: ${{ steps.plan-output.outputs.destroy }}'
 
-  #     - name: Run Terraform Apply
-  #       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
-  #       id: apply
-  #       with:
-  #         run: ${{ steps.run-plan.outputs.run_id }}
-  #         comment: "Confirmed from GitHub Actions CI"
+      - name: Run Terraform Apply
+        uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
+        id: apply
+        with:
+          run: ${{ steps.run-plan.outputs.run_id }}
+          comment: "Confirmed from GitHub Actions CI"
 
-  #     - name: Show run output
-  #       uses: hashicorp/tfc-workflows-github/actions/show-run@v1.0.0
-  #       id: show-run
-  #       with:
-  #         run: ${{ steps.apply.outputs.run_id }}
-  #     - run: |
-  #         echo "Latest Run Status: ${{ steps.show-run.outputs.run_status }}"
+      - name: Show run output
+        uses: hashicorp/tfc-workflows-github/actions/show-run@v1.0.0
+        id: show-run
+        with:
+          run: ${{ steps.apply.outputs.run_id }}
+      - run: |
+          echo "Latest Run Status: ${{ steps.show-run.outputs.run_status }}"
 
   # tfe-ws-cfg-grp:
   #   needs: [tfe-ws-parent-run, parse-ws-config]
