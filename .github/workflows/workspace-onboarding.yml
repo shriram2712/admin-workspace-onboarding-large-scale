@@ -31,289 +31,289 @@ jobs:
         workspaces: ${{ steps.admin-workspace.outputs.workspaces }}
         admin_workspaces: ${{ steps.admin-workspace.outputs.admin_workspaces }}
 
-  tfe-ws-parent:
-    needs: [parse-ws-config]
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout-repo
-        uses: actions/checkout@v3
-      - name: echo
-        id: admin-ws
-        run: | 
-            echo ${{needs.parse-ws-config.outputs.admin_workspaces}}
-            jq -r '.[]' <<< '${{needs.parse-ws-config.outputs.admin_workspaces}}' | paste -sd "," -
-            export ADMIN_FILESET="$(jq -r '.[]' <<< '${{needs.parse-ws-config.outputs.admin_workspaces}}' | paste -sd "," -)"
-            echo "admin_fileset=config/{$ADMIN_FILESET}/*.yaml" >> $GITHUB_OUTPUT
-      - name: log fileset
-        run: |
-          echo "admin_fileset:"${{ steps.admin-ws.outputs.admin_fileset }}
-      - name: Setup Python
-        uses: actions/setup-python@v4.6.0
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-      - name: install-python-dep
-        run: pip install -r ./.github/workflows/requirements.txt
-      - name: check-create-workspace
-        run: python ./.github/workflows/create-admin-workspace.py
-        env:
-          TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
-          WORKSPACE_NAME: 'admin-ws-parent-admin'
-    outputs: 
-      admin_fileset: ${{ steps.admin-ws.outputs.admin_fileset }}
+  # tfe-ws-parent:
+  #   needs: [parse-ws-config]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: checkout-repo
+  #       uses: actions/checkout@v3
+  #     - name: echo
+  #       id: admin-ws
+  #       run: | 
+  #           echo ${{needs.parse-ws-config.outputs.admin_workspaces}}
+  #           jq -r '.[]' <<< '${{needs.parse-ws-config.outputs.admin_workspaces}}' | paste -sd "," -
+  #           export ADMIN_FILESET="$(jq -r '.[]' <<< '${{needs.parse-ws-config.outputs.admin_workspaces}}' | paste -sd "," -)"
+  #           echo "admin_fileset=config/{$ADMIN_FILESET}/*.yaml" >> $GITHUB_OUTPUT
+  #     - name: log fileset
+  #       run: |
+  #         echo "admin_fileset:"${{ steps.admin-ws.outputs.admin_fileset }}
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v4.6.0
+  #       with:
+  #         python-version: '3.10'
+  #         cache: 'pip'
+  #     - name: install-python-dep
+  #       run: pip install -r ./.github/workflows/requirements.txt
+  #     - name: check-create-workspace
+  #       run: python ./.github/workflows/create-admin-workspace.py
+  #       env:
+  #         TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
+  #         WORKSPACE_NAME: 'admin-ws-parent-admin'
+  #   outputs: 
+  #     admin_fileset: ${{ steps.admin-ws.outputs.admin_fileset }}
 
-  tfe-parent-cfg:
-    needs: [tfe-ws-parent]
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout-repo
-        uses: actions/checkout@v3
+  # tfe-parent-cfg:
+  #   needs: [tfe-ws-parent]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: checkout-repo
+  #       uses: actions/checkout@v3
 
-      - name: set-tfvars #auto tf vars  
-        run: |
-          echo ${{ needs.tfe-ws-parent.outputs.admin_fileset }}
-          echo 'organization="${{ vars.TF_CLOUD_ORGANIZATION }}"' >> pipeline-generated.auto.tfvars
-          echo 'workspace-yaml-filepath="${{needs.tfe-ws-parent.outputs.admin_fileset}}"' >> pipeline-generated.auto.tfvars
-          cat pipeline-generated.auto.tfvars
+  #     - name: set-tfvars #auto tf vars  
+  #       run: |
+  #         echo ${{ needs.tfe-ws-parent.outputs.admin_fileset }}
+  #         echo 'organization="${{ vars.TF_CLOUD_ORGANIZATION }}"' >> pipeline-generated.auto.tfvars
+  #         echo 'workspace-yaml-filepath="${{needs.tfe-ws-parent.outputs.admin_fileset}}"' >> pipeline-generated.auto.tfvars
+  #         cat pipeline-generated.auto.tfvars
 
-      - name: Upload configuration version
-        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
-        id: parent-tfe-config
-        with:
-          workspace: 'admin-ws-parent-admin'
-          directory: ${{ env.TF_DIRECTORY }}
-    outputs: 
-      configversion: ${{ steps.parent-tfe-config.outputs.configuration_version_id }}
+  #     - name: Upload configuration version
+  #       uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
+  #       id: parent-tfe-config
+  #       with:
+  #         workspace: 'admin-ws-parent-admin'
+  #         directory: ${{ env.TF_DIRECTORY }}
+  #   outputs: 
+  #     configversion: ${{ steps.parent-tfe-config.outputs.configuration_version_id }}
 
-  tfe-ws-parent-run:
-    needs: [tfe-parent-cfg]
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout-repo
-        uses: actions/checkout@v3
+  # tfe-ws-parent-run:
+  #   needs: [tfe-parent-cfg]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: checkout-repo
+  #       uses: actions/checkout@v3
 
-      - name: Run Terraform Plan
-        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
-        continue-on-error: true
-        id: run-plan
-        with:
-          workspace: 'admin-ws-parent-admin'
-          configuration_version: ${{ needs.tfe-parent-cfg.outputs.configversion }}
+  #     - name: Run Terraform Plan
+  #       uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
+  #       continue-on-error: true
+  #       id: run-plan
+  #       with:
+  #         workspace: 'admin-ws-parent-admin'
+  #         configuration_version: ${{ needs.tfe-parent-cfg.outputs.configversion }}
 
-      - name: Log Error
-        if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
-        run: |
-          echo 'An error occurred in the previous step.'
-          echo 'The error message was: ${{ steps.run-plan.outcome }}'
-          echo 'run_status: ${{ steps.run-plan.outputs.run_status }}'
-          echo 'plan_status: ${{ steps.run-plan.outputs.plan_status }}'
-          echo 'payload: ${{ steps.run-plan.outputs.payload }}'
+  #     - name: Log Error
+  #       if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
+  #       run: |
+  #         echo 'An error occurred in the previous step.'
+  #         echo 'The error message was: ${{ steps.run-plan.outcome }}'
+  #         echo 'run_status: ${{ steps.run-plan.outputs.run_status }}'
+  #         echo 'plan_status: ${{ steps.run-plan.outputs.plan_status }}'
+  #         echo 'payload: ${{ steps.run-plan.outputs.payload }}'
           
-      - name: Discard Terraform Run
-        if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
-        uses: hashicorp/tfc-workflows-github/actions/discard-run@v1.0.0
-        id: discard-run
-        with:
-          run: ${{ steps.run-plan.outputs.run_id }}
-          comment: "Run discarded due to error ${{ steps.run-plan.outputs.plan_status }}"
+  #     - name: Discard Terraform Run
+  #       if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
+  #       uses: hashicorp/tfc-workflows-github/actions/discard-run@v1.0.0
+  #       id: discard-run
+  #       with:
+  #         run: ${{ steps.run-plan.outputs.run_id }}
+  #         comment: "Run discarded due to error ${{ steps.run-plan.outputs.plan_status }}"
       
-      - name: Catch Error   
-        if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
-        run: | 
-          exit 1
+  #     - name: Catch Error   
+  #       if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
+  #       run: | 
+  #         exit 1
       
-      - uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.0.0
-        name: Get plan output
-        id: plan-output
-        with:
-          plan: ${{ steps.run-plan.outputs.plan_id }}
+  #     - uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.0.0
+  #       name: Get plan output
+  #       id: plan-output
+  #       with:
+  #         plan: ${{ steps.run-plan.outputs.plan_id }}
       
-      - name: Reference plan output
-        run: |
-          echo 'Plan status: ${{ steps.plan-output.outputs.plan_status }}'
-          echo 'Resources to Add: ${{ steps.plan-output.outputs.add }}'
-          echo 'Resources to Change: ${{ steps.plan-output.outputs.change }}'
-          echo 'Resources to Destroy: ${{ steps.plan-output.outputs.destroy }}'
+  #     - name: Reference plan output
+  #       run: |
+  #         echo 'Plan status: ${{ steps.plan-output.outputs.plan_status }}'
+  #         echo 'Resources to Add: ${{ steps.plan-output.outputs.add }}'
+  #         echo 'Resources to Change: ${{ steps.plan-output.outputs.change }}'
+  #         echo 'Resources to Destroy: ${{ steps.plan-output.outputs.destroy }}'
 
-      - name: Run Terraform Apply
-        uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
-        id: apply
-        with:
-          run: ${{ steps.run-plan.outputs.run_id }}
-          comment: "Confirmed from GitHub Actions CI"
+  #     - name: Run Terraform Apply
+  #       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
+  #       id: apply
+  #       with:
+  #         run: ${{ steps.run-plan.outputs.run_id }}
+  #         comment: "Confirmed from GitHub Actions CI"
 
-      - name: Show run output
-        uses: hashicorp/tfc-workflows-github/actions/show-run@v1.0.0
-        id: show-run
-        with:
-          run: ${{ steps.apply.outputs.run_id }}
-      - run: |
-          echo "Latest Run Status: ${{ steps.show-run.outputs.run_status }}"
+  #     - name: Show run output
+  #       uses: hashicorp/tfc-workflows-github/actions/show-run@v1.0.0
+  #       id: show-run
+  #       with:
+  #         run: ${{ steps.apply.outputs.run_id }}
+  #     - run: |
+  #         echo "Latest Run Status: ${{ steps.show-run.outputs.run_status }}"
 
-  tfe-ws-cfg-grp:
-    needs: [tfe-ws-parent-run, parse-ws-config]
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 15
-      matrix: 
-        admin_workspaces: ${{fromJson(needs.parse-ws-config.outputs.admin_workspaces)}}
-    steps:
-      - name: checkout-repo
-        uses: actions/checkout@v3
+  # tfe-ws-cfg-grp:
+  #   needs: [tfe-ws-parent-run, parse-ws-config]
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     max-parallel: 15
+  #     matrix: 
+  #       admin_workspaces: ${{fromJson(needs.parse-ws-config.outputs.admin_workspaces)}}
+  #   steps:
+  #     - name: checkout-repo
+  #       uses: actions/checkout@v3
         
-      - name: echo-filename
-        run: echo ${{ matrix.admin_workspaces }}
-      - name: get-workspace-yaml
-        id: get-workspace
-        run: |
-          cd config/${{ matrix.admin_workspaces }}
-          ls *.yaml | jq -R . | jq -s . | sed 's/.yaml//g'
-          echo "workspace="$(ls *.yaml | jq -R . | jq -s . | sed 's/.yaml//g')"" >> $GITHUB_OUTPUT
+  #     - name: echo-filename
+  #       run: echo ${{ matrix.admin_workspaces }}
+  #     - name: get-workspace-yaml
+  #       id: get-workspace
+  #       run: |
+  #         cd config/${{ matrix.admin_workspaces }}
+  #         ls *.yaml | jq -R . | jq -s . | sed 's/.yaml//g'
+  #         echo "workspace="$(ls *.yaml | jq -R . | jq -s . | sed 's/.yaml//g')"" >> $GITHUB_OUTPUT
 
-      - name: validate
-        id: validate
-        run: |
-            echo ${{steps.get-workspace.outputs.workspace}}
-      - name: get-org
-        id: org
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq '.organization' ./config/${{ matrix.admin_workspaces }}/${{ matrix.admin_workspaces }}".yaml"
-      - name: get-workspace
-        id: workspace_name
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq '.workspace_name' ./config/${{ matrix.admin_workspaces }}/${{ matrix.admin_workspaces }}".yaml"   
+  #     - name: validate
+  #       id: validate
+  #       run: |
+  #           echo ${{steps.get-workspace.outputs.workspace}}
+  #     - name: get-org
+  #       id: org
+  #       uses: mikefarah/yq@master
+  #       with:
+  #         cmd: yq '.organization' ./config/${{ matrix.admin_workspaces }}/${{ matrix.admin_workspaces }}".yaml"
+  #     - name: get-workspace
+  #       id: workspace_name
+  #       uses: mikefarah/yq@master
+  #       with:
+  #         cmd: yq '.workspace_name' ./config/${{ matrix.admin_workspaces }}/${{ matrix.admin_workspaces }}".yaml"   
 
-      - name: validate-yaml-consumer
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq --exit-status 'tag == "!!map"' ./config/${{ matrix.admin_workspaces }}/consumer/*.yaml -v; 
+  #     - name: validate-yaml-consumer
+  #       uses: mikefarah/yq@master
+  #       with:
+  #         cmd: yq --exit-status 'tag == "!!map"' ./config/${{ matrix.admin_workspaces }}/consumer/*.yaml -v; 
 
-      - name: set-tfvars #auto tf vars - group workspaces ##  "config/{matrix.admin_workspace}/consumer/*.yaml"
-        run: |
-          echo ${{ steps.org.outputs.result }}
-          echo ${{ steps.workspace_name.outputs.result }}
-          echo 'organization="${{ steps.org.outputs.result }}"' >> pipeline-generated.auto.tfvars
-          echo 'workspace-yaml-filepath="config/${{ matrix.admin_workspaces }}/consumer/*.yaml"' >> pipeline-generated.auto.tfvars
-          cat pipeline-generated.auto.tfvars
+  #     - name: set-tfvars #auto tf vars - group workspaces ##  "config/{matrix.admin_workspace}/consumer/*.yaml"
+  #       run: |
+  #         echo ${{ steps.org.outputs.result }}
+  #         echo ${{ steps.workspace_name.outputs.result }}
+  #         echo 'organization="${{ steps.org.outputs.result }}"' >> pipeline-generated.auto.tfvars
+  #         echo 'workspace-yaml-filepath="config/${{ matrix.admin_workspaces }}/consumer/*.yaml"' >> pipeline-generated.auto.tfvars
+  #         cat pipeline-generated.auto.tfvars
 
-      - name: Upload configuration version
-        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
-        id: tfe-configversion
-        with:
-          workspace: ${{ matrix.admin_workspaces }}
-          directory: ${{ env.TF_DIRECTORY }}
+  #     - name: Upload configuration version
+  #       uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
+  #       id: tfe-configversion
+  #       with:
+  #         workspace: ${{ matrix.admin_workspaces }}
+  #         directory: ${{ env.TF_DIRECTORY }}
 
-      - uses: cloudposse/github-action-matrix-outputs-write@main
-        id: writeoutput
-        with:
-          matrix-step-name: ${{ github.job }}
-          matrix-key: ${{ matrix.admin_workspaces }}
-          outputs: |-
-            config: ${{ steps.tfe-configversion.outputs.configuration_version_id}}
+  #     - uses: cloudposse/github-action-matrix-outputs-write@main
+  #       id: writeoutput
+  #       with:
+  #         matrix-step-name: ${{ github.job }}
+  #         matrix-key: ${{ matrix.admin_workspaces }}
+  #         outputs: |-
+  #           config: ${{ steps.tfe-configversion.outputs.configuration_version_id}}
 
-  ## Read matrix outputs - using artifacts until github supports dynamic matric outputs
-  rmatrix:
-    runs-on: ubuntu-latest
-    needs: [tfe-ws-cfg-grp]
-    steps:
-      - uses: cloudposse/github-action-matrix-outputs-read@main
-        id: readmatrix
-        with:
-          matrix-step-name: "tfe-ws-cfg-grp"
-    outputs:
-      result: "${{ steps.readmatrix.outputs.result }}"
+  # ## Read matrix outputs - using artifacts until github supports dynamic matric outputs
+  # rmatrix:
+  #   runs-on: ubuntu-latest
+  #   needs: [tfe-ws-cfg-grp]
+  #   steps:
+  #     - uses: cloudposse/github-action-matrix-outputs-read@main
+  #       id: readmatrix
+  #       with:
+  #         matrix-step-name: "tfe-ws-cfg-grp"
+  #   outputs:
+  #     result: "${{ steps.readmatrix.outputs.result }}"
 
       
-  tfe-ws-run:
-    needs: [rmatrix,parse-ws-config]
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 15
-      matrix: 
-        workspaces: ${{fromJson(needs.parse-ws-config.outputs.admin_workspaces)}}
-    steps:
-      - name: tfe-config-version
-        id: configversion
-        env:
-          OUTPUT1: ${{ needs.rmatrix.outputs.result }}
-        run: | 
-          export CONFIG_VERSION=$(echo '${{ needs.rmatrix.outputs.result }}' | jq -r '.config."${{ matrix.workspaces }}"')
-          echo "configversion=$CONFIG_VERSION" >> $GITHUB_OUTPUT
-      - name: echo config_version
-        run: |
-          echo "${{steps.configversion.outputs.configversion}}"
-      - name: checkout-repo
-        uses: actions/checkout@v3
-        id: checkout
+  # tfe-ws-run:
+  #   needs: [rmatrix,parse-ws-config]
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     max-parallel: 15
+  #     matrix: 
+  #       workspaces: ${{fromJson(needs.parse-ws-config.outputs.admin_workspaces)}}
+  #   steps:
+  #     - name: tfe-config-version
+  #       id: configversion
+  #       env:
+  #         OUTPUT1: ${{ needs.rmatrix.outputs.result }}
+  #       run: | 
+  #         export CONFIG_VERSION=$(echo '${{ needs.rmatrix.outputs.result }}' | jq -r '.config."${{ matrix.workspaces }}"')
+  #         echo "configversion=$CONFIG_VERSION" >> $GITHUB_OUTPUT
+  #     - name: echo config_version
+  #       run: |
+  #         echo "${{steps.configversion.outputs.configversion}}"
+  #     - name: checkout-repo
+  #       uses: actions/checkout@v3
+  #       id: checkout
 
-      - name: Run Terraform Plan
-        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
-        continue-on-error: true
-        id: run-plan
-        with:
-          workspace: ${{ matrix.workspaces }}
-          configuration_version: ${{ steps.configversion.outputs.configversion }}
+  #     - name: Run Terraform Plan
+  #       uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
+  #       continue-on-error: true
+  #       id: run-plan
+  #       with:
+  #         workspace: ${{ matrix.workspaces }}
+  #         configuration_version: ${{ steps.configversion.outputs.configversion }}
 
-      - name: Log Error
-        if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
-        run: |
-          echo 'An error occurred in the previous step.'
-          echo 'The error message was: ${{ steps.run-plan.outcome }}'
-          echo 'run_status: ${{ steps.run-plan.outputs.run_status }}'
-          echo 'plan_status: ${{ steps.run-plan.outputs.plan_status }}'
-          echo 'payload: ${{ steps.run-plan.outputs.payload }}'
+  #     - name: Log Error
+  #       if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
+  #       run: |
+  #         echo 'An error occurred in the previous step.'
+  #         echo 'The error message was: ${{ steps.run-plan.outcome }}'
+  #         echo 'run_status: ${{ steps.run-plan.outputs.run_status }}'
+  #         echo 'plan_status: ${{ steps.run-plan.outputs.plan_status }}'
+  #         echo 'payload: ${{ steps.run-plan.outputs.payload }}'
         
-      - name: Discard Terraform Run
-        if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
-        uses: hashicorp/tfc-workflows-github/actions/discard-run@v1.0.0
-        id: discard-run
-        with:
-          run: ${{ steps.run-plan.outputs.run_id }}
-          comment: "Run discarded due to error ${{ steps.run-plan.outputs.plan_status }}"
+  #     - name: Discard Terraform Run
+  #       if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
+  #       uses: hashicorp/tfc-workflows-github/actions/discard-run@v1.0.0
+  #       id: discard-run
+  #       with:
+  #         run: ${{ steps.run-plan.outputs.run_id }}
+  #         comment: "Run discarded due to error ${{ steps.run-plan.outputs.plan_status }}"
       
-      - name: Catch Error   
-        if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
-        run: | 
-          exit 1
+  #     - name: Catch Error   
+  #       if: ${{ steps.run-plan.outputs.plan_status != 'finished' }} 
+  #       run: | 
+  #         exit 1
       
-      - uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.0.0
-        name: Get plan output
-        id: plan-output
-        with:
-          plan: ${{ steps.run-plan.outputs.plan_id }}
+  #     - uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.0.0
+  #       name: Get plan output
+  #       id: plan-output
+  #       with:
+  #         plan: ${{ steps.run-plan.outputs.plan_id }}
       
-      - name: Reference plan output
-        run: |
-          echo 'Plan status: ${{ steps.plan-output.outputs.plan_status }}'
-          echo 'Resources to Add: ${{ steps.plan-output.outputs.add }}'
-          echo 'Resources to Change: ${{ steps.plan-output.outputs.change }}'
-          echo 'Resources to Destroy: ${{ steps.plan-output.outputs.destroy }}'
-          echo 'plan_id: ${{ steps.plan-output.outputs.plan_id }}'
-      - name: Show run output plan
-        uses: hashicorp/tfc-workflows-github/actions/show-run@v1.0.0
-        id: show-run-plan
-        with:
-          run: ${{ steps.run-plan.outputs.run_id }}
-      - run: |
-          echo 'Latest Run Status: ${{ steps.show-run-plan.outputs.run_status }}'
-          echo 'payload: ${{ steps.show-run-plan.outputs.payload }}'
-          echo 'run_link: ${{ steps.show-run-plan.outputs.run_link }}'
+  #     - name: Reference plan output
+  #       run: |
+  #         echo 'Plan status: ${{ steps.plan-output.outputs.plan_status }}'
+  #         echo 'Resources to Add: ${{ steps.plan-output.outputs.add }}'
+  #         echo 'Resources to Change: ${{ steps.plan-output.outputs.change }}'
+  #         echo 'Resources to Destroy: ${{ steps.plan-output.outputs.destroy }}'
+  #         echo 'plan_id: ${{ steps.plan-output.outputs.plan_id }}'
+  #     - name: Show run output plan
+  #       uses: hashicorp/tfc-workflows-github/actions/show-run@v1.0.0
+  #       id: show-run-plan
+  #       with:
+  #         run: ${{ steps.run-plan.outputs.run_id }}
+  #     - run: |
+  #         echo 'Latest Run Status: ${{ steps.show-run-plan.outputs.run_status }}'
+  #         echo 'payload: ${{ steps.show-run-plan.outputs.payload }}'
+  #         echo 'run_link: ${{ steps.show-run-plan.outputs.run_link }}'
 
-      - name: Run Terraform Apply
-        uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
-        id: apply
-        with:
-          run: ${{ steps.run-plan.outputs.run_id }}
-          comment: "Confirmed from GitHub Actions CI"
+  #     - name: Run Terraform Apply
+  #       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
+  #       id: apply
+  #       with:
+  #         run: ${{ steps.run-plan.outputs.run_id }}
+  #         comment: "Confirmed from GitHub Actions CI"
 
-      - name: Show run output apply
-        uses: hashicorp/tfc-workflows-github/actions/show-run@v1.0.0
-        id: show-run
-        with:
-          run: ${{ steps.apply.outputs.run_id }}
-      - run: |
-          echo 'Latest Run Status: ${{ steps.show-run.outputs.run_status }}'
-          echo 'payload: ${{ steps.show-run.outputs.payload }}'
-          echo 'run_link: ${{ steps.show-run.outputs.run_link }}'
+  #     - name: Show run output apply
+  #       uses: hashicorp/tfc-workflows-github/actions/show-run@v1.0.0
+  #       id: show-run
+  #       with:
+  #         run: ${{ steps.apply.outputs.run_id }}
+  #     - run: |
+  #         echo 'Latest Run Status: ${{ steps.show-run.outputs.run_status }}'
+  #         echo 'payload: ${{ steps.show-run.outputs.payload }}'
+  #         echo 'run_link: ${{ steps.show-run.outputs.run_link }}'
