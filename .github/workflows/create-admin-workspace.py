@@ -40,12 +40,12 @@ if not workspace_exists:
                 "auto-apply": False,
             },
             "relationships": {
-            "project": {
-            "data": {
-                "type": "projects",
-                "id": project_id
-            }
-            }
+                "project": {
+                    "data": {
+                    "type": "projects",
+                    "id": project_id
+                    }
+                }
             }
         }
     }
