@@ -152,68 +152,68 @@ jobs:
       - run: |
           echo "Latest Run Status: ${{ steps.show-run.outputs.run_status }}"
 
-  # tfe-ws-cfg-grp:
-  #   needs: [tfe-ws-parent-run, parse-ws-config]
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     max-parallel: 15
-  #     matrix: 
-  #       admin_workspaces: ${{fromJson(needs.parse-ws-config.outputs.admin_workspaces)}}
-  #   steps:
-  #     - name: checkout-repo
-  #       uses: actions/checkout@v3
+  tfe-ws-cfg-grp:
+    needs: [tfe-ws-parent-run, parse-ws-config]
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 15
+      matrix: 
+        admin_workspaces: ${{fromJson(needs.parse-ws-config.outputs.admin_workspaces)}}
+    steps:
+      - name: checkout-repo
+        uses: actions/checkout@v3
         
-  #     - name: echo-filename
-  #       run: echo ${{ matrix.admin_workspaces }}
-  #     - name: get-workspace-yaml
-  #       id: get-workspace
-  #       run: |
-  #         cd config/${{ matrix.admin_workspaces }}
-  #         ls *.yaml | jq -R . | jq -s . | sed 's/.yaml//g'
-  #         echo "workspace="$(ls *.yaml | jq -R . | jq -s . | sed 's/.yaml//g')"" >> $GITHUB_OUTPUT
+      - name: echo-filename
+        run: echo ${{ matrix.admin_workspaces }}
+      - name: get-workspace-yaml
+        id: get-workspace
+        run: |
+          cd config/${{ matrix.admin_workspaces }}
+          ls *.yaml | jq -R . | jq -s . | sed 's/.yaml//g'
+          echo "workspace="$(ls *.yaml | jq -R . | jq -s . | sed 's/.yaml//g')"" >> $GITHUB_OUTPUT
 
-  #     - name: validate
-  #       id: validate
-  #       run: |
-  #           echo ${{steps.get-workspace.outputs.workspace}}
-  #     - name: get-org
-  #       id: org
-  #       uses: mikefarah/yq@master
-  #       with:
-  #         cmd: yq '.organization' ./config/${{ matrix.admin_workspaces }}/${{ matrix.admin_workspaces }}".yaml"
-  #     - name: get-workspace
-  #       id: workspace_name
-  #       uses: mikefarah/yq@master
-  #       with:
-  #         cmd: yq '.workspace_name' ./config/${{ matrix.admin_workspaces }}/${{ matrix.admin_workspaces }}".yaml"   
+      - name: validate
+        id: validate
+        run: |
+            echo ${{steps.get-workspace.outputs.workspace}}
+      - name: get-org
+        id: org
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.organization' ./config/${{ matrix.admin_workspaces }}/${{ matrix.admin_workspaces }}".yaml"
+      - name: get-workspace
+        id: workspace_name
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.workspace_name' ./config/${{ matrix.admin_workspaces }}/${{ matrix.admin_workspaces }}".yaml"   
 
-  #     - name: validate-yaml-consumer
-  #       uses: mikefarah/yq@master
-  #       with:
-  #         cmd: yq --exit-status 'tag == "!!map"' ./config/${{ matrix.admin_workspaces }}/consumer/*.yaml -v; 
+      - name: validate-yaml-consumer
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq --exit-status 'tag == "!!map"' ./config/${{ matrix.admin_workspaces }}/consumer/*.yaml -v; 
 
-  #     - name: set-tfvars #auto tf vars - group workspaces ##  "config/{matrix.admin_workspace}/consumer/*.yaml"
-  #       run: |
-  #         echo ${{ steps.org.outputs.result }}
-  #         echo ${{ steps.workspace_name.outputs.result }}
-  #         echo 'organization="${{ steps.org.outputs.result }}"' >> pipeline-generated.auto.tfvars
-  #         echo 'workspace-yaml-filepath="config/${{ matrix.admin_workspaces }}/consumer/*.yaml"' >> pipeline-generated.auto.tfvars
-  #         cat pipeline-generated.auto.tfvars
+      - name: set-tfvars #auto tf vars - group workspaces ##  "config/{matrix.admin_workspace}/consumer/*.yaml"
+        run: |
+          echo ${{ steps.org.outputs.result }}
+          echo ${{ steps.workspace_name.outputs.result }}
+          echo 'organization="${{ steps.org.outputs.result }}"' >> pipeline-generated.auto.tfvars
+          echo 'workspace-yaml-filepath="config/${{ matrix.admin_workspaces }}/consumer/*.yaml"' >> pipeline-generated.auto.tfvars
+          cat pipeline-generated.auto.tfvars
 
-  #     - name: Upload configuration version
-  #       uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
-  #       id: tfe-configversion
-  #       with:
-  #         workspace: ${{ matrix.admin_workspaces }}
-  #         directory: ${{ env.TF_DIRECTORY }}
+      - name: Upload configuration version
+        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
+        id: tfe-configversion
+        with:
+          workspace: ${{ matrix.admin_workspaces }}
+          directory: ${{ env.TF_DIRECTORY }}
 
-  #     - uses: cloudposse/github-action-matrix-outputs-write@main
-  #       id: writeoutput
-  #       with:
-  #         matrix-step-name: ${{ github.job }}
-  #         matrix-key: ${{ matrix.admin_workspaces }}
-  #         outputs: |-
-  #           config: ${{ steps.tfe-configversion.outputs.configuration_version_id}}
+      - uses: cloudposse/github-action-matrix-outputs-write@main
+        id: writeoutput
+        with:
+          matrix-step-name: ${{ github.job }}
+          matrix-key: ${{ matrix.admin_workspaces }}
+          outputs: |-
+            config: ${{ steps.tfe-configversion.outputs.configuration_version_id}}
 
   # ## Read matrix outputs - using artifacts until github supports dynamic matric outputs
   # rmatrix:
