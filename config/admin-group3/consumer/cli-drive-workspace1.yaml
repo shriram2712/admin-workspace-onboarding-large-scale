@@ -1,8 +1,0 @@
-organization: shriramrajaraman
-workspace_name: dev3-account1-ws
-create_project: false
-project_name: Novartis
-create_repo: false
-create_variable_set: false
-workspace_tags:
-  - novartis
