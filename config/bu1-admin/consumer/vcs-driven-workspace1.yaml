@@ -9,6 +9,5 @@ workspace_tags:
 vcs_repo:
   identifier: shriram2712/hashicat-app
   branch: main
-  tags_regex: ^\d+.\d+.\d+$
   ingress_submodules: null
   oauth_token_id: ot-8CVoQ6FRRUjjW2Ek
