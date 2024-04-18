@@ -7,7 +7,7 @@ create_variable_set: false
 workspace_tags:
   - novartis
 vcs_repo:
-  identifier: shriram2712/hashicat-app
+  identifier: shriram8169/test
   branch: main
   ingress_submodules: null
-  oauth_token_id: ot-8CVoQ6FRRUjjW2Ek
+  oauth_token_id: ot-gQqRo5Jndcnofh5V
