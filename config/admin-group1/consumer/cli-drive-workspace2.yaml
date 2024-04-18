@@ -1,7 +1,7 @@
 organization: shriramrajaraman
-workspace_name: dev1-account3-ws
+workspace_name: bu1-account2-ws
 create_project: false
-project_name: Novartis
+project_name: Novartis-HCL
 create_repo: false
 create_variable_set: false
 workspace_tags:

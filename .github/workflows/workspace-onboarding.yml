@@ -59,7 +59,7 @@ jobs:
         run: python ./.github/workflows/create-admin-workspace.py
         env:
           TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
-          WORKSPACE_NAME: 'admin-ws-parent-admin'
+          WORKSPACE_NAME: 'novartis-admin-ws'
           PROJECT_ID: 'prj-UgwaH4VZVDivjmao'
     outputs: 
       admin_fileset: ${{ steps.admin-ws.outputs.admin_fileset }}
@@ -82,7 +82,7 @@ jobs:
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
         id: parent-tfe-config
         with:
-          workspace: 'admin-ws-parent-admin'
+          workspace: 'novartis-admin-ws'
           directory: ${{ env.TF_DIRECTORY }}
     outputs: 
       configversion: ${{ steps.parent-tfe-config.outputs.configuration_version_id }}

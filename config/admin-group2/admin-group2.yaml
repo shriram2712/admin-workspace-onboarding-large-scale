@@ -1,6 +1,6 @@
 organization: shriramrajaraman
-workspace_name: admin-group2
+workspace_name: bu2-admin-group
 create_project: false
-project_name: Novartis-WS-Onboarding
+project_name: Novartis-WS-Onboarding-Admin
 create_repo: false
 create_variable_set: false

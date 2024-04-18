@@ -1,0 +1,14 @@
+organization: shriramrajaraman
+workspace_name: bu1-account4-ws
+create_project: false
+project_name: Novartis-HCL
+create_repo: false
+create_variable_set: false
+workspace_tags:
+  - novartis
+vcs_repo:
+  identifier: shriram2712/hashicat-app
+  branch: main
+  tags_regex: ^\d+.\d+.\d+$
+  ingress_submodules: null
+  oauth_token_id: ot-8CVoQ6FRRUjjW2Ek
