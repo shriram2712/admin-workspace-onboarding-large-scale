@@ -1,0 +1,13 @@
+organization: shriramrajaraman
+workspace_name: bu1-account5-ws
+create_project: false
+project_name: Novartis-HCL
+create_repo: false
+create_variable_set: false
+workspace_tags:
+  - novartis
+vcs_repo:
+  identifier: shriram8169/test
+  branch: main
+  ingress_submodules: null
+  oauth_token_id: ot-gQqRo5Jndcnofh5V
