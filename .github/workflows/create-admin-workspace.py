@@ -62,3 +62,4 @@ if not workspace_exists:
         raise SystemExit(f"Error: {e}") # print error message and exit the script
 else:
     print("Workspace already exists.")
+
