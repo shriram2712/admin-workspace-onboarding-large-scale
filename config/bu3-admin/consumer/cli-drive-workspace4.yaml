@@ -1,0 +1,8 @@
+organization: shriramrajaraman
+workspace_name: bu3-account4-ws
+create_project: false
+project_name: Novartis-HCL
+create_repo: false
+create_variable_set: false
+workspace_tags:
+  - novartis
